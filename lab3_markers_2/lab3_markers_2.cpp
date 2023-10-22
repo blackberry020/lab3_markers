@@ -1,7 +1,6 @@
 #include <windows.h>
 #include <iostream>
 #include <vector>
-#include <synchapi.h>
 
 CRITICAL_SECTION critical_section;
 
@@ -11,9 +10,14 @@ struct arg {
 	int cntNumbers;
 	int* numbers;
 	int cntThread;
+
+	arg(HANDLE* _threads, bool* _active, int _cnt, int* _num) :
+		threads(_threads), isActive(_active), cntNumbers(_cnt), numbers(_num), cntThread(-1) {};
 };
 
-DWORD WINAPI func(arg* info) {
+DWORD WINAPI func(LPVOID argument) {
+
+	arg* info = static_cast<arg*>(argument);
 
 	std::vector <int> marked;
 
@@ -43,6 +47,8 @@ DWORD WINAPI func(arg* info) {
 				for (auto i : marked) {
 					info->numbers[i] = 0;
 				}
+
+				LeaveCriticalSection(&critical_section);
 
 				return 0;
 			}
@@ -83,7 +89,10 @@ int main()
 
 	for (int i = 0; i < cntThreads; i++) {
 
-		hThread[i] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)func, (void*)i, 0, &IDThread[i]);
+		arg* argument = new arg(hThread, isActive, n, numbers);
+		argument->cntThread = i;
+
+		hThread[i] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)func, (void*)argument, 0, &IDThread[i]);
 
 		if (hThread == NULL) {
 			std::cout << "could not create a thread";
@@ -102,7 +111,7 @@ int main()
 		isActive[numToTerminate] = false;
 
 		for (int i = 0; i < cntThreads; i++) {
-			SetSignal(hThread[i]);
+			SetEvent(hThread[i]);
 		}
 
 		for (int i = 0; i < n; i++) {
