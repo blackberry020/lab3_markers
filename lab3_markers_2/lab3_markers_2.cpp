@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <iostream>
-#include <string>
+#include <vector>
+#include <synchapi.h>
 
 CRITICAL_SECTION critical_section;
 
@@ -12,17 +13,9 @@ struct arg {
 	int cntThread;
 };
 
-int countNonZeroElements(int* mas, int n) {
-	int cnt = 0;
-
-	for (int i = 0; i < n; i++) {
-		if (mas[i]) cnt++;
-	}
-
-	return cnt;
-}
-
 DWORD WINAPI func(arg* info) {
+
+	std::vector <int> marked;
 
 	srand(info->cntThread);
 
@@ -39,12 +32,17 @@ DWORD WINAPI func(arg* info) {
 		}
 		else {
 
+			std::cout << info->cntThread;
+			std::cout << "marked " << marked.size() << " elements" << std::endl;
+			std::cout << "couldn't mark " << index << " element" << std::endl;
+
 			WaitForSingleObject(info->threads[info->cntThread], INFINITE);
 
 			if (!info->isActive[info->cntThread]) {
-				std::cout << info->cntThread;
-				std::cout << "marked " << countNonZeroElements(info->numbers, info->cntNumbers) << " elements" << std::endl;
-				std::cout << "couldn't mark " << index << " element" << std::endl;
+				
+				for (auto i : marked) {
+					info->numbers[i] = 0;
+				}
 
 				return 0;
 			}
@@ -103,7 +101,9 @@ int main()
 
 		isActive[numToTerminate] = false;
 
-		SetSignal(hThread[numToTerminate]);
+		for (int i = 0; i < cntThreads; i++) {
+			SetSignal(hThread[i]);
+		}
 
 		for (int i = 0; i < n; i++) {
 			std::cout << numbers[i] << " ";
