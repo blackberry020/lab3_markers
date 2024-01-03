@@ -129,6 +129,9 @@
   <ItemGroup>
     <ClCompile Include="lab3_markers_2.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="argument.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
